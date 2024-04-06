@@ -42,8 +42,8 @@ function Result() {
   };
 
   useEffect(() => {
-    const token = "q5e6B6POFT9CmF5CuPGcig7NdyIi";
-    const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=250`;
+    const token = "vHY8LHdgjaVTckFSX6N8Tf3OLdSS";
+    const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=100`;
 
     axios
       .get(apiUrl, {
@@ -68,6 +68,7 @@ function Result() {
           );
           const min = Math.min(...prices);
           const max = Math.max(...prices);
+
           setMinPrice(min);
           setMaxPrice(max);
           setValuePrice(min); // Set initial valuePrice to minPrice
@@ -82,17 +83,24 @@ function Result() {
 
   const filteredDataPrice = dataPrice.filter((flight) => {
     const totalPrice = flight.price.total;
-    return totalPrice >= minPrice && totalPrice <= maxPrice;
+    return (
+      (minPrice === 0 && maxPrice === 0) ||
+      (totalPrice >= minPrice && totalPrice <= maxPrice)
+    );
   });
 
   useEffect(() => {
-    setFilterPrice(filteredDataPrice);
-  }, filteredDataPrice);
+    if (minPrice > 0 || maxPrice > 0) {
+      setFilterPrice(filteredDataPrice);
+    } else {
+      setFilterPrice(dataPrice);
+    }
+  }, [minPrice, maxPrice, dataPrice]);
 
   const handlePriceChange = (event) => {
     const value = parseInt(event.target.value);
-    setValuePrice(value); // Update valuePrice state variable
-    setMinPrice(value); // Update minPrice state variable
+    setValuePrice(value);
+    setMinPrice(value);
   };
 
   return (

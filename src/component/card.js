@@ -46,8 +46,8 @@ function Card({ isChecked1, dataFilter, filPrice }) {
 
   useEffect(() => {
     if (isChecked1) {
-      const token = "q5e6B6POFT9CmF5CuPGcig7NdyIi";
-      const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=250`;
+      const token = "vHY8LHdgjaVTckFSX6N8Tf3OLdSS";
+      const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=100`;
 
       axios
         .get(apiUrl, {
