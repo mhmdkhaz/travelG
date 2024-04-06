@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
-function lengthResult({ leng }) {
+function lengthResult() {
   return (
     <div className="flex flex-row-reverse justify-between items-center">
       <div className="flex flex-row-reverse items-center justify-center gap-1">
@@ -15,7 +15,7 @@ function lengthResult({ leng }) {
         <div className="flex flex-col items-center justify-center mr10">
           <h4 style={{ color: "#114aaf" }} className="text-xl font-semibold">
             <span className="new-bold-dark font-20">رحلة الذهاب</span>
-            <span className="flight-count new-bold-dark"> {leng} </span>
+            <span className="flight-count new-bold-dark"> (5)</span>
             <span className="new-bold-dark" data-i18n="common.results">
               النتائج
             </span>

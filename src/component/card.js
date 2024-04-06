@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useInputContext } from "../context/context";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ModalChoose from "./modalChoose";
 
-function Card({ isChecked1, dataFilter }) {
+function Card({ isChecked1, dataFilter, filPrice }) {
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTravelInfo, setSelectedTravelInfo] = useState(null);
@@ -22,10 +22,32 @@ function Card({ isChecked1, dataFilter }) {
     travelClass,
   } = useInputContext();
 
+  const filteredData = useMemo(() => {
+    if (!isChecked1 || !isChecked1.length) return [];
+
+    const filteredData = data.filter((info) => {
+      if (isChecked1[0] && !info.oneWay) return true;
+      if (isChecked1[1] && info.oneWay) return true;
+      return false;
+    });
+
+    if (dataFilter.length > 0) {
+      return filteredData.filter((info) =>
+        dataFilter.includes(info.itineraries[0].segments[0].carrierCode)
+      );
+    }
+
+    if (filPrice.length > 0) {
+      return filPrice;
+    }
+
+    return filteredData;
+  }, [isChecked1, data, dataFilter]);
+
   useEffect(() => {
     if (isChecked1) {
-      const token = "8rtZIBhP1EfBnxGG4quleGgtr5lN";
-      const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=50`;
+      const token = "q5e6B6POFT9CmF5CuPGcig7NdyIi";
+      const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=250`;
 
       axios
         .get(apiUrl, {
@@ -34,25 +56,7 @@ function Card({ isChecked1, dataFilter }) {
           },
         })
         .then((response) => {
-          // Filter data based on isChecked1 and dataFilter
-          let filteredData = response?.data?.data;
-
-          if (isChecked1[0]) {
-            filteredData = filteredData.filter((info) => info.oneWay === false);
-          }
-
-          if (isChecked1[1]) {
-            filteredData = filteredData.filter((info) => info.oneWay === true);
-          }
-
-          // Apply filter based on dataFilter
-          if (dataFilter.length > 0) {
-            filteredData = filteredData.filter((info) =>
-              dataFilter.includes(info.itineraries[0].segments[0].carrierCode)
-            );
-          }
-
-          setData(filteredData);
+          setData(response?.data?.data);
         })
         .catch((error) => {
           console.error(
@@ -71,15 +75,14 @@ function Card({ isChecked1, dataFilter }) {
     kidCount,
     infantCount,
     travelClass,
+    data, // Add data as a dependency
   ]);
 
-  // Handle button click to open modal and set selected travel info
   const handleButtonClick = (travelInfo) => {
     setSelectedTravelInfo(travelInfo);
     setIsModalOpen(true);
   };
 
-  // Handle modal close
   const closeModal = () => {
     setIsModalOpen(false);
   };
@@ -93,8 +96,8 @@ function Card({ isChecked1, dataFilter }) {
         selectedTravelInfo={selectedTravelInfo}
       />
       {/* start in card data  */}
-      {data &&
-        data.map((travelInfo) => (
+      {filteredData &&
+        filteredData.map((travelInfo) => (
           <Div key={travelInfo.id} className="grid grid-cols-12 ">
             {/* First card */}
             <div className="flex justify-center items-center relative col-span-4 ">

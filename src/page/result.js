@@ -1,16 +1,21 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useInputContext } from "../context/context";
 import NavInfo from "../component/navInfo";
 import LengthResult from "../component/lengthResult";
 import Card from "../component/card";
 import Filter from "../component/filter.js";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useInputContext } from "../context/context";
 
 function Result() {
   const [carriers, setCarriers] = useState([]);
   const [isChecked1, setIsChecked1] = useState([]);
-  const [len, setLen] = useState([]);
-  const [dataFilter, setDataFilter] = useState([]); // State to store dataFilter value
+  const [dataPrice, setDataPrice] = useState([]);
+  const [dataFilter, setDataFilter] = useState([]);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [valuePrice, setValuePrice] = useState(0); // State to store current price value
+  const [filterPrice, setFilterPrice] = useState(0); // State to store current price value
+
   const {
     inputValueFrom,
     inputValueTo,
@@ -23,29 +28,22 @@ function Result() {
   } = useInputContext();
 
   const handleCheckboxChange1 = (index, carCode) => {
-    // Create a copy of isChecked1 array
     const newIsChecked1 = [...isChecked1];
-    // Toggle the value of the clicked checkbox
     newIsChecked1[index] = !newIsChecked1[index];
-    // Update the state with the new array
     setIsChecked1(newIsChecked1);
 
-    // Check if the carrier code already exists in the filter
     const isCodeSelected = dataFilter.includes(carCode);
 
-    // Update dataFilter state based on checkbox changes
     if (isCodeSelected) {
-      // If code is already selected, remove it from the filter
       setDataFilter(dataFilter.filter((code) => code !== carCode));
     } else {
-      // If code is not selected, add it to the filter
       setDataFilter([...dataFilter, carCode]);
     }
   };
 
   useEffect(() => {
-    const token = "8rtZIBhP1EfBnxGG4quleGgtr5lN";
-    const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=50`;
+    const token = "q5e6B6POFT9CmF5CuPGcig7NdyIi";
+    const apiUrl = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${inputValueFrom}&destinationLocationCode=${inputValueTo}&departureDate=${departureDate}&returnDate=${returnDate}&adults=${adultCount}&children=${kidCount}&infants=${infantCount}&travelClass=${travelClass}&currencyCode=SAR&max=250`;
 
     axios
       .get(apiUrl, {
@@ -58,22 +56,44 @@ function Result() {
           response?.data?.dictionaries &&
           response.data.dictionaries.carriers
         ) {
-          // Convert carriers object to an array of key-value pairs
           const carriersArray = Object.entries(
             response.data.dictionaries.carriers
           );
-          // Initialize isChecked1 state with false for each carrier
           setIsChecked1(Array(carriersArray.length).fill(false));
           setCarriers(carriersArray);
-          setLen(response.length);
+          setDataPrice(response?.data?.data);
+
+          const prices = response?.data?.data.map(
+            (flight) => flight.price.total
+          );
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          setMinPrice(min);
+          setMaxPrice(max);
+          setValuePrice(min); // Set initial valuePrice to minPrice
         } else {
           console.error("Carriers data is not as expected:", response.data);
         }
       })
       .catch((error) => {
-        console.error("There was a problem with your fetch operation:", error);
+        console.error("Error fetching data:", error);
       });
   }, []);
+
+  const filteredDataPrice = dataPrice.filter((flight) => {
+    const totalPrice = flight.price.total;
+    return totalPrice >= minPrice && totalPrice <= maxPrice;
+  });
+
+  useEffect(() => {
+    setFilterPrice(filteredDataPrice);
+  }, filteredDataPrice);
+
+  const handlePriceChange = (event) => {
+    const value = parseInt(event.target.value);
+    setValuePrice(value); // Update valuePrice state variable
+    setMinPrice(value); // Update minPrice state variable
+  };
 
   return (
     <div style={{ backgroundColor: "#e6f0ff" }} className="w-full">
@@ -81,13 +101,12 @@ function Result() {
       <div className="container px-8 mx-auto">
         <div className="grid grid-cols-7">
           <div className="col-span-7 md:col-span-5">
-            <LengthResult leng={len} />
+            <LengthResult />
             <Card
               isChecked1={isChecked1}
               dataFilter={dataFilter}
-              carriers={carriers}
+              filPrice={filterPrice}
             />
-            {/* Pass dataFilter as prop */}
           </div>
           <div className="col-span-7 md:col-span-2 mt-12">
             <div>
@@ -100,20 +119,19 @@ function Result() {
               <div className="mt-4">
                 <Filter
                   text="رحلة مباشرة"
-                  dataFilter="street" // Set dataFilter value
+                  dataFilter="street"
                   checked={isChecked1[0]}
-                  onChange={() => handleCheckboxChange1(0, "street")} // Pass dataFilter value
+                  onChange={() => handleCheckboxChange1(0, "street")}
                 />
               </div>
               <div className="mt-4">
                 <Filter
                   text="طريق واحد"
-                  dataFilter="onWay" // Set dataFilter value
+                  dataFilter="onWay"
                   checked={isChecked1[1]}
-                  onChange={() => handleCheckboxChange1(1, "onWay")} // Pass dataFilter value
+                  onChange={() => handleCheckboxChange1(1, "onWay")}
                 />
               </div>
-              {/* 2 */}
               <div className=" mt-5">
                 <h1
                   className="font-semibold text-right"
@@ -125,14 +143,42 @@ function Result() {
                   <div className="mt-4" key={index}>
                     <Filter
                       text={carrierName}
-                      dataFilter={carrierCode} // Set dataFilter value
-                      checked={isChecked1[index + 2]} // Start from index 2
+                      dataFilter={carrierCode}
+                      checked={isChecked1[index + 2]}
                       onChange={() =>
                         handleCheckboxChange1(index + 2, carrierCode)
-                      } // Pass dataFilter value
+                      }
                     />
                   </div>
                 ))}
+              </div>
+              <div className=" mt-5">
+                <h1
+                  className="font-semibold text-right"
+                  style={{ color: "#196df5" }}
+                >
+                  خطوط الطيران
+                </h1>
+                <div className="relative mb-6">
+                  <label htmlFor="labels-range-input" className="sr-only">
+                    Labels range
+                  </label>
+                  <input
+                    id="labels-range-input"
+                    type="range"
+                    value={valuePrice}
+                    min={minPrice}
+                    max={maxPrice}
+                    onChange={handlePriceChange}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  />
+                  <span className="text-sm text-gray-500 dark:text-gray-400 absolute start-0 -bottom-6">
+                    Min {minPrice}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 absolute end-0 -bottom-6">
+                    Max {maxPrice}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
